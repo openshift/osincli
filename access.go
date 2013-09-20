@@ -20,9 +20,10 @@ const (
 
 // Access request information
 type AccessRequest struct {
-	client        *Client
-	Type          AccessRequestType
-	AuthorizeData *AuthorizeData
+	client           *Client
+	Type             AccessRequestType
+	AuthorizeData    *AuthorizeData
+	CustomParameters map[string]string
 }
 
 // Access data
@@ -36,9 +37,10 @@ type AccessData struct {
 
 func (c *Client) NewAccessRequest(t AccessRequestType, ad *AuthorizeData) *AccessRequest {
 	return &AccessRequest{
-		client:        c,
-		Type:          t,
-		AuthorizeData: ad,
+		client:           c,
+		Type:             t,
+		AuthorizeData:    ad,
+		CustomParameters: make(map[string]string),
 	}
 }
 
@@ -49,10 +51,15 @@ func (c *AccessRequest) GetTokenUrl() *url.URL {
 	uq := u.Query()
 	uq.Add("grant_type", string(c.Type))
 	uq.Add("code", c.AuthorizeData.Code)
-	uq.Add("redirect_url", c.client.config.RedirectUrl)
+	uq.Add("redirect_uri", c.client.config.RedirectUrl)
 	if c.client.config.SendClientSecretInParams {
 		uq.Add("client_id", c.client.config.ClientId)
 		uq.Add("client_secret", c.client.config.ClientSecret)
+	}
+	if c.CustomParameters != nil {
+		for pn, pv := range c.CustomParameters {
+			uq.Add(pn, pv)
+		}
 	}
 	u.RawQuery = uq.Encode()
 

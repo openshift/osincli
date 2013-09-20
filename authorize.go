@@ -15,8 +15,9 @@ const (
 
 // Authorize request information
 type AuthorizeRequest struct {
-	client *Client
-	Type   AuthorizeRequestType
+	client           *Client
+	Type             AuthorizeRequestType
+	CustomParameters map[string]string
 }
 
 // Authorization data
@@ -28,8 +29,9 @@ type AuthorizeData struct {
 // Creates a new authorize request
 func (c *Client) NewAuthorizeRequest(t AuthorizeRequestType) *AuthorizeRequest {
 	return &AuthorizeRequest{
-		client: c,
-		Type:   t,
+		client:           c,
+		Type:             t,
+		CustomParameters: make(map[string]string),
 	}
 }
 
@@ -44,12 +46,17 @@ func (c *AuthorizeRequest) GetAuthorizeUrlWithParams(state string) *url.URL {
 	uq := u.Query()
 	uq.Add("response_type", string(c.Type))
 	uq.Add("client_id", c.client.config.ClientId)
-	uq.Add("redirect_url", c.client.config.RedirectUrl)
+	uq.Add("redirect_uri", c.client.config.RedirectUrl)
 	if c.client.config.Scope != "" {
 		uq.Add("scope", c.client.config.Scope)
 	}
 	if state != "" {
 		uq.Add("state", state)
+	}
+	if c.CustomParameters != nil {
+		for pn, pv := range c.CustomParameters {
+			uq.Add(pn, pv)
+		}
 	}
 	u.RawQuery = uq.Encode()
 	return &u

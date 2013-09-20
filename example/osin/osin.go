@@ -21,10 +21,11 @@ func main() {
 		panic(err)
 	}
 
+	// create a new request to generate the url
+	areq := client.NewAuthorizeRequest(osincli.CODE)
+
 	// Home
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// create a new request to generate the url
-		areq := client.NewAuthorizeRequest(osincli.CODE)
 		u := areq.GetAuthorizeUrl()
 
 		w.Write([]byte(fmt.Sprintf("<a href=\"%s\">Login</a>", u.String())))
@@ -33,7 +34,6 @@ func main() {
 	// Auth endpoint
 	http.HandleFunc("/appauth", func(w http.ResponseWriter, r *http.Request) {
 		// parse a token request
-		areq := client.NewAuthorizeRequest(osincli.CODE)
 		if areqdata, err := areq.HandleRequest(r); err == nil {
 			treq := client.NewAccessRequest(osincli.AUTHORIZATION_CODE, areqdata)
 

@@ -59,7 +59,7 @@ func downloadData(method string, u *url.URL, auth *BasicAuth, transport http.Rou
 	defer presp.Body.Close()
 
 	if presp.StatusCode != 200 {
-		return errors.New("Invalid status code")
+		return errors.New(fmt.Sprintf("Invalid status code (%d): %s", presp.StatusCode, presp.Status))
 	}
 
 	// decode JSON and detect OAuth error
