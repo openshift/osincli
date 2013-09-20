@@ -25,6 +25,7 @@ type AuthorizeData struct {
 	State string
 }
 
+// Creates a new authorize request
 func (c *Client) NewAuthorizeRequest(t AuthorizeRequestType) *AuthorizeRequest {
 	return &AuthorizeRequest{
 		client: c,
@@ -32,37 +33,36 @@ func (c *Client) NewAuthorizeRequest(t AuthorizeRequestType) *AuthorizeRequest {
 	}
 }
 
-func (c *AuthorizeRequest) GetAuthorizeUrl() (*url.URL, error) {
+// Returns the authorize url
+func (c *AuthorizeRequest) GetAuthorizeUrl() *url.URL {
 	return c.GetAuthorizeUrlWithParams("")
 }
 
-func (c *AuthorizeRequest) GetAuthorizeUrlWithParams(state string) (*url.URL, error) {
-	u, err := url.Parse(c.client.Config.AuthorizeUrl)
-	if err != nil {
-		return nil, err
-	}
-
+// Returns the authorize url
+func (c *AuthorizeRequest) GetAuthorizeUrlWithParams(state string) *url.URL {
+	u := *c.client.configcache.authorizeUrl
 	uq := u.Query()
 	uq.Add("response_type", string(c.Type))
-	uq.Add("client_id", c.client.Config.ClientId)
-	uq.Add("redirect_url", c.client.Config.RedirectUrl)
-	if c.client.Config.Scope != "" {
-		uq.Add("scope", c.client.Config.Scope)
+	uq.Add("client_id", c.client.config.ClientId)
+	uq.Add("redirect_url", c.client.config.RedirectUrl)
+	if c.client.config.Scope != "" {
+		uq.Add("scope", c.client.config.Scope)
 	}
 	if state != "" {
 		uq.Add("state", state)
 	}
 	u.RawQuery = uq.Encode()
-
-	return u, nil
+	return &u
 }
 
+// Handle the authorization request
 func (c *AuthorizeRequest) HandleRequest(r *http.Request) (*AuthorizeData, error) {
 	r.ParseForm()
 
 	var ad *AuthorizeData
 
 	if c.Type == CODE {
+		// detect error parameters
 		if r.Form.Get("error") != "" {
 			return nil, NewError(r.Form.Get("error"), r.Form.Get("error_description"), r.Form.Get("error_uri"), r.Form.Get("state"))
 		} else if r.Form.Get("code") == "" {

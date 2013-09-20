@@ -1,5 +1,6 @@
 package osincli
 
+// OAuth2 error base
 type Error struct {
 	Id          string
 	Description string

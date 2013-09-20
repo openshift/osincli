@@ -9,4 +9,5 @@ type ClientConfig struct {
 	Scope                    string
 	ErrorsInStatusCode       bool
 	SendClientSecretInParams bool
+	UseGetAccessRequest      bool
 }
