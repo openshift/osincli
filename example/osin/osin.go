@@ -3,8 +3,8 @@
 package main
 
 import (
-	osincli "../.."
 	"fmt"
+	"github.com/RangelReale/osincli"
 	"net/http"
 )
 
