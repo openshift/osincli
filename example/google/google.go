@@ -1,7 +1,7 @@
 package main
 
 import (
-	osincli "../.."
+	"github.com/RangelReale/osincli"
 	"fmt"
 	"io/ioutil"
 	"net/http"
