@@ -50,7 +50,11 @@ func (c *AccessRequest) GetTokenUrl() *url.URL {
 	u := *c.client.configcache.tokenUrl
 	uq := u.Query()
 	uq.Add("grant_type", string(c.Type))
-	uq.Add("code", c.AuthorizeData.Code)
+	if c.Type == REFRESH_TOKEN {
+		uq.Add("refresh_token", c.AuthorizeData.Code)
+	} else {
+		uq.Add("code", c.AuthorizeData.Code)
+	}
 	uq.Add("redirect_uri", c.client.config.RedirectUrl)
 	if c.client.config.SendClientSecretInParams {
 		uq.Add("client_id", c.client.config.ClientId)
