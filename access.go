@@ -50,11 +50,32 @@ func (c *AccessRequest) GetTokenUrl() *url.URL {
 	u := *c.client.configcache.tokenUrl
 	uq := u.Query()
 	uq.Add("grant_type", string(c.Type))
-	if c.Type == REFRESH_TOKEN {
+
+	switch c.Type {
+	case PASSWORD:
+		// Avoid double-adding a username parameter if it was specified as a custom parameter and not in AuthorizeData
+		// This ensures callers that previously used CustomParameters to pass username continue to work
+		_, hasCustomUsername := c.CustomParameters["username"]
+		if len(c.AuthorizeData.Username) > 0 || !hasCustomUsername {
+			uq.Add("username", c.AuthorizeData.Username)
+		}
+
+		// Avoid double-adding a password parameter if it was specified as a custom parameter and not in AuthorizeData
+		// This ensures callers that previously used CustomParameters to pass password continue to work
+		_, hasCustomPassword := c.CustomParameters["password"]
+		if len(c.AuthorizeData.Password) > 0 || !hasCustomPassword {
+			uq.Add("password", c.AuthorizeData.Password)
+		}
+	case REFRESH_TOKEN:
 		uq.Add("refresh_token", c.AuthorizeData.Code)
-	} else {
+	case AUTHORIZATION_CODE:
 		uq.Add("code", c.AuthorizeData.Code)
+	case CLIENT_CREDENTIALS:
+		// no auth data added
+	case IMPLICIT:
+		// no auth data added
 	}
+
 	uq.Add("redirect_uri", c.client.config.RedirectUrl)
 	if c.client.config.SendClientSecretInParams {
 		uq.Add("client_id", c.client.config.ClientId)
