@@ -9,6 +9,7 @@ func TestGetTokenUrl(t *testing.T) {
 		TokenUrl:     "https://example.com/token",
 		AuthorizeUrl: "https://example.com/authorize",
 		RedirectUrl:  "/",
+		Scope:        "scope1 scope2",
 	}
 
 	testcases := map[string]struct {
@@ -21,7 +22,13 @@ func TestGetTokenUrl(t *testing.T) {
 		"client credentials": {
 			Type: CLIENT_CREDENTIALS,
 			Data: AuthorizeData{State: "mystate", Code: "mycode", Username: "myusername", Password: "mypassword"},
-			URL:  "https://example.com/token?grant_type=client_credentials&redirect_uri=%2F",
+			URL:  "https://example.com/token?grant_type=client_credentials&scope=scope1+scope2",
+		},
+		"client credentials with custom params": {
+			Type:   CLIENT_CREDENTIALS,
+			Data:   AuthorizeData{State: "mystate", Code: "mycode", Username: "myusername", Password: "mypassword"},
+			Params: map[string]string{"scope": "customscope"},
+			URL:    "https://example.com/token?grant_type=client_credentials&scope=customscope",
 		},
 		"code grant": {
 			Type: AUTHORIZATION_CODE,
@@ -31,18 +38,18 @@ func TestGetTokenUrl(t *testing.T) {
 		"refresh grant": {
 			Type: REFRESH_TOKEN,
 			Data: AuthorizeData{State: "mystate", Code: "mycode", Username: "myusername", Password: "mypassword"},
-			URL:  "https://example.com/token?grant_type=refresh_token&redirect_uri=%2F&refresh_token=mycode",
+			URL:  "https://example.com/token?grant_type=refresh_token&refresh_token=mycode",
 		},
 		"password grant": {
 			Type: PASSWORD,
 			Data: AuthorizeData{State: "mystate", Code: "mycode", Username: "myusername", Password: "mypassword"},
-			URL:  "https://example.com/token?grant_type=password&password=mypassword&redirect_uri=%2F&username=myusername",
+			URL:  "https://example.com/token?grant_type=password&password=mypassword&scope=scope1+scope2&username=myusername",
 		},
 		"password grant with custom params": {
 			Type:   PASSWORD,
 			Data:   AuthorizeData{},
-			Params: map[string]string{"username": "customuser", "password": "custompw"},
-			URL:    "https://example.com/token?grant_type=password&password=custompw&redirect_uri=%2F&username=customuser",
+			Params: map[string]string{"username": "customuser", "password": "custompw", "scope": "customscope"},
+			URL:    "https://example.com/token?grant_type=password&password=custompw&scope=customscope&username=customuser",
 		},
 	}
 
@@ -56,7 +63,7 @@ func TestGetTokenUrl(t *testing.T) {
 		req.CustomParameters = tc.Params
 		url := req.GetTokenUrl().String()
 		if url != tc.URL {
-			t.Errorf("%s: Expected %s, got %s", k, tc.URL, url)
+			t.Errorf("%s: Expected\n%s\ngot\n%s", k, tc.URL, url)
 		}
 	}
 }
