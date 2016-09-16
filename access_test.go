@@ -1,6 +1,9 @@
 package osincli
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestGetTokenUrl(t *testing.T) {
 	clientConfig := ClientConfig{
@@ -64,6 +67,60 @@ func TestGetTokenUrl(t *testing.T) {
 		url := req.GetTokenUrl().String()
 		if url != tc.URL {
 			t.Errorf("%s: Expected\n%s\ngot\n%s", k, tc.URL, url)
+		}
+	}
+}
+
+func TestGetTokenUrlPKCE(t *testing.T) {
+	generatedConfig := &ClientConfig{
+		ClientId:     "myclient",
+		TokenUrl:     "https://example.com/token",
+		AuthorizeUrl: "https://example.com/authorize",
+		RedirectUrl:  "/",
+	}
+	if err := PopulatePKCE(generatedConfig); err != nil {
+		t.Fatalf("Unexpected error: %#v", err)
+	}
+	generatedConfigTokenUrl := fmt.Sprintf(
+		"https://example.com/token?code=mycode&code_verifier=%s&grant_type=authorization_code&redirect_uri=%%2F",
+		generatedConfig.CodeVerifier)
+
+	for name, test := range map[string]struct {
+		Config *ClientConfig
+		URL    string
+	}{
+		"no verifier": {
+			Config: &ClientConfig{
+				ClientId:     "myclient",
+				TokenUrl:     "https://example.com/token",
+				AuthorizeUrl: "https://example.com/authorize",
+				RedirectUrl:  "/",
+			},
+			URL: "https://example.com/token?code=mycode&grant_type=authorization_code&redirect_uri=%2F",
+		},
+		"has verifier": {
+			Config: &ClientConfig{
+				ClientId:     "myclient",
+				TokenUrl:     "https://example.com/token",
+				AuthorizeUrl: "https://example.com/authorize",
+				RedirectUrl:  "/",
+				CodeVerifier: "randomdata",
+			},
+			URL: "https://example.com/token?code=mycode&code_verifier=randomdata&grant_type=authorization_code&redirect_uri=%2F",
+		},
+		"has generated verifier": {
+			Config: generatedConfig,
+			URL:    generatedConfigTokenUrl,
+		},
+	} {
+		client, err := NewClient(test.Config)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := client.NewAccessRequest(AUTHORIZATION_CODE, &AuthorizeData{State: "mystate", Code: "mycode", Username: "myusername", Password: "mypassword"})
+		url := req.GetTokenUrl().String()
+		if url != test.URL {
+			t.Errorf("%s: Expected\n%s\ngot\n%s", name, test.URL, url)
 		}
 	}
 }
